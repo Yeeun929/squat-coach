@@ -1,0 +1,33 @@
+let repCount = 0;
+let down = false;   // squat이 내려갔는지 여부
+
+function calcAngle(a, b, c) {
+  // a,b,c : {x, y, z}
+  const AB = [a.x - b.x, a.y - b.y, a.z - b.z];
+  const CB = [c.x - b.x, c.y - b.y, c.z - b.z];
+  const dot = AB[0]*CB[0] + AB[1]*CB[1] + AB[2]*CB[2];
+  const magAB = Math.hypot(...AB);
+  const magCB = Math.hypot(...CB);
+  const rad = Math.acos(dot / (magAB*magCB));
+  return rad * 180/Math.PI;
+}
+
+function onResults(results){
+  // …(위 기존 코드와 동일)…
+  if(results.poseLandmarks){
+    const leftHip   = results.poseLandmarks[Pose.PoseLandmark.LEFT_HIP];
+    const leftKnee  = results.poseLandmarks[Pose.PoseLandmark.LEFT_KNEE];
+    const leftAnkle = results.poseLandmarks[Pose.PoseLandmark.LEFT_ANKLE];
+
+    const kneeAngle = calcAngle(leftHip, leftKnee, leftAnkle);
+    // 일반적인 스쿼트: 무릎 각도가 90° 이하이면 “내려갔다” 판단
+    if(kneeAngle < 100 && !down){
+      down = true;               // 내려감 시작
+    }
+    if(kneeAngle > 160 && down){
+      down = false;              // 올라감 완료 → 1회 카운트
+      repCount++;
+      infoDiv.textContent = `VIEW: ${determineView(results.poseLandmarks)}  |  Reps: ${repCount}`;
+    }
+  }
+}
